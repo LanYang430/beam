@@ -93,7 +93,7 @@ BEAM is an open-source toolkit that accelerates biomolecular conformational samp
 
 ```bash
 # Clone repository
-git clone https://github.com/YOUR_USERNAME/beam.git
+git clone https://LanYang430//beam.git
 cd beam
 
 # Install dependencies
@@ -226,7 +226,7 @@ If you use BEAM in your research, please cite:
   title={BEAM: Boosted Enhanced sampling through Machine-learned CVs},
   author={Lan Yang},
   year={2025},
-  url={https://github.com/YOUR_USERNAME/beam}
+  url={https://github.com/LanYang430/beam}
 }
 ```
 ---
