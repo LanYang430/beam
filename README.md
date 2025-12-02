@@ -93,7 +93,7 @@ BEAM is an open-source toolkit that accelerates biomolecular conformational samp
 
 ```bash
 # Clone repository
-git clone https://LanYang430//beam.git
+git clone https://github.com/LanYang430/beam.git
 cd beam
 
 # Install dependencies
