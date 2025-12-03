@@ -182,22 +182,23 @@ def train_cg_tica(traj_data, lagtime=50, dim=2, save_path=None):
     
     # Initialize and fit TICA
     tica = TICA(lagtime=lagtime, dim=dim)
-    tica_model = tica.fit(traj_data)
+    tica = TICA(lagtime=lagtime, dim=dim)
+    tica.fit(traj_data)
     
     # Transform data
-    tica_output = tica_model.transform(traj_data)
+    tica_output = tica.transform(traj_data)
     
     print(f"  Training complete!")
     print(f"  Output shape: {tica_output.shape}")
-    print(f"  Eigenvalues (first {min(5, dim)}): {tica_model.eigenvalues[:min(5, dim)]}")
+    # Eigenvalues not available in fetch_model()
     
     # Save model if requested
     if save_path:
         with open(save_path, 'wb') as f:
-            pickle.dump(tica_model, f)
+            pickle.dump(tica, f)
         print(f"  Model saved to: {save_path}")
     
-    return tica_model, tica_output
+    return tica, tica_output
 
 
 def prepare_reap_interface(

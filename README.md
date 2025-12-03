@@ -182,7 +182,6 @@ beam/
 ├── data/                    # Demo data
 │   └── (synthetic trajectories)
 │
-├── docs/                    # Documentation
 │
 ├── README.md                # This file
 ├── requirements.txt         # Python dependencies
@@ -226,7 +225,7 @@ If you use BEAM in your research, please cite:
   title={BEAM: Boosted Enhanced sampling through Machine-learned CVs},
   author={Lan Yang},
   year={2025},
-  url={https://github.com/LanYang430/beam}
+  url={https://github.com/LanYang430/beam.git}
 }
 ```
 ---

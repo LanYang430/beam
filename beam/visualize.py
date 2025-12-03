@@ -388,46 +388,49 @@ def plot_cv_comparison(cg_cv, aa_in_cg_cv, aa_in_aa_cv=None,
     
     plt.show()
 
-
-def plot_timescales(eigenvalues, n_components=10,
-                   title="TICA Implied Timescales",
-                   color='coral', save_path=None, figsize=(9, 5)):
+def plot_timescales(tica_estimator, lagtime, dt=1.0, n_components=5, 
+                   title="TICA Implied Timescales", save_path=None):
     """
     Plot implied timescales from TICA eigenvalues.
     
     Parameters
     ----------
-    eigenvalues : np.ndarray
-        TICA eigenvalues
+    tica_estimator : deeptime.decomposition.TICA
+        Fitted TICA estimator (not model)
+    lagtime : int
+        Lag time used for TICA (in frames)
+    dt : float
+        Time per frame (e.g., in ns)
     n_components : int
-        Number of components to show
-    title : str
-        Plot title
-    color : str
-        Bar color
-    save_path : str, optional
-        Save figure to this path
-    figsize : tuple
-        Figure size
+        Number of components to plot
     """
-    fig, ax = plt.subplots(figsize=figsize)
+    import matplotlib.pyplot as plt
+    import numpy as np
     
-    n_show = min(n_components, len(eigenvalues))
-    x = np.arange(1, n_show + 1)
+    # 获取 eigenvalues
+    if hasattr(tica_estimator, 'eigenvalues'):
+        eigvals = tica_estimator.eigenvalues[:n_components]
+    else:
+        print("Warning: Cannot access eigenvalues from this object")
+        return
     
-    ax.bar(x, eigenvalues[:n_show],
-           color=color, alpha=0.8, edgecolor='black', linewidth=1)
+    # 计算 implied timescales
+    tau = lagtime * dt
+    timescales = -tau / np.log(np.abs(eigvals))
     
+    # 画图
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.bar(range(1, len(timescales) + 1), timescales, alpha=0.7)
     ax.set_xlabel('TICA Component', fontsize=12)
-    ax.set_ylabel('Eigenvalue (Timescale)', fontsize=12)
+    ax.set_ylabel(f'Implied Timescale ({dt} per frame units)', fontsize=12)
     ax.set_title(title, fontsize=14)
-    ax.set_xticks(x)
-    ax.grid(axis='y', alpha=0.3, linestyle='--')
-    
-    plt.tight_layout()
+    ax.set_xticks(range(1, len(timescales) + 1))
+    ax.grid(axis='y', alpha=0.3)
     
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        print(f"Figure saved: {save_path}")
     
+    plt.tight_layout()
     plt.show()
+    
+    return timescale

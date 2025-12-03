@@ -32,3 +32,13 @@ Thumbs.db
 *.log
 results/
 outputs/
+
+# Generated files from running notebooks
+*.pkl
+*.png
+*.jpg
+*.pdf
+
+# But keep demo data files
+!data/demo_*.npy
+!data/demo_*.csv

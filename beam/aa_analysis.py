@@ -176,39 +176,40 @@ def train_aa_tica(aa_features, lagtime=50, dim=2, save_path=None):
     
     # Train TICA
     tica = TICA(lagtime=lagtime, dim=dim)
-    tica_model = tica.fit(aa_features)
+    tica = TICA(lagtime=lagtime, dim=dim)
+    tica.fit(aa_features)
     
     # Transform
-    aa_cv = tica_model.transform(aa_features)
+    aa_cv = tica.transform(aa_features)
     
     print(f"  Training complete!")
     print(f"  Output shape: {aa_cv.shape}")
-    print(f"  Eigenvalues (first {min(5, dim)}): {tica_model.eigenvalues[:min(5, dim)]}")
+    # Eigenvalues not available in fetch_model()
     
     # Save if requested
     if save_path:
         with open(save_path, 'wb') as f:
-            pickle.dump(tica_model, f)
+            pickle.dump(tica, f)
         print(f"  Model saved to: {save_path}")
     
-    return tica_model, aa_cv
+    return tica, aa_cv
 
 
 def compare_cg_aa_cvs(cg_tica_model, aa_tica_model, method='basic'):
     """
     Compare CG-learned vs AA-learned collective variables.
-    
+
     **TO BE FULLY IMPLEMENTED**
-    
+
     This will include:
     - Eigenvalue/timescale comparison
     - Eigenvector similarity (cosine similarity, overlap)
     - Residue-level weight correlation
     - CV space overlap metrics
     - Identification of CG artifacts vs AA-specific features
-    
+
     For now, provides basic comparison and placeholder for future work.
-    
+
     Parameters
     ----------
     cg_tica_model : TICA
@@ -217,7 +218,7 @@ def compare_cg_aa_cvs(cg_tica_model, aa_tica_model, method='basic'):
         TICA model trained on AA data
     method : str
         Comparison method (currently only 'basic' available)
-        
+
     Returns
     -------
     comparison : dict
@@ -226,40 +227,43 @@ def compare_cg_aa_cvs(cg_tica_model, aa_tica_model, method='basic'):
     print("\n" + "="*60)
     print("CG vs AA CV Comparison")
     print("="*60)
-    
-    # Basic comparison: eigenvalues
-    cg_eigenvalues = cg_tica_model.eigenvalues
-    aa_eigenvalues = aa_tica_model.eigenvalues
-    
-    n_compare = min(len(cg_eigenvalues), len(aa_eigenvalues), 5)
-    
-    print("\nEigenvalue comparison (first {}):".format(n_compare))
-    print("  Component  |  CG Value  |  AA Value  |  Ratio (AA/CG)")
-    print("  " + "-"*56)
-    for i in range(n_compare):
-        ratio = aa_eigenvalues[i] / cg_eigenvalues[i] if cg_eigenvalues[i] > 0 else 0
-        print(f"      {i+1}      |  {cg_eigenvalues[i]:.4f}   |  {aa_eigenvalues[i]:.4f}   |    {ratio:.4f}")
-    
-    comparison = {
-        'cg_eigenvalues': cg_eigenvalues.tolist(),
-        'aa_eigenvalues': aa_eigenvalues.tolist(),
-        'status': 'basic_comparison_only',
-        'note': 'Detailed comparison metrics to be implemented...',
-        'future_features': [
-            'Eigenvector similarity analysis',
-            'Residue-level contribution correlation',
-            'CV space overlap quantification',
-            'CG artifact identification',
-            'Statistical significance testing'
-        ]
-    }
-    
-    print("\n" + "="*60)
-    print("Note: Detailed comparison to be implemented...")
-    print("="*60)
-    
-    return comparison
 
+    # 尝试获取 eigenvalues
+    def get_eigenvalues(model, name):
+        if hasattr(model, 'eigenvalues'):
+            return model.eigenvalues
+        elif hasattr(model, 'eigenvalues_'):
+            return model.eigenvalues_
+        else:
+            print(f"Warning: Cannot access eigenvalues from {name} model")
+            return None
+
+    cg_eigenvalues = get_eigenvalues(cg_tica_model, 'CG')
+    aa_eigenvalues = get_eigenvalues(aa_tica_model, 'AA')
+
+    if cg_eigenvalues is None or aa_eigenvalues is None:
+        return {
+            'status': 'error',
+            'note': 'Eigenvalues not accessible. This is a placeholder function.'
+        }
+
+    n_compare = min(len(cg_eigenvalues), len(aa_eigenvalues), 5)
+
+    print(f"\nComparing first {n_compare} components:")
+    print(f"{'Component':<12} {'CG Eigenvalue':<20} {'AA Eigenvalue':<20}")
+    print("-" * 52)
+
+    for i in range(n_compare):
+        print(f"tIC{i+1:<8} {cg_eigenvalues[i]:<20.6f} {aa_eigenvalues[i]:<20.6f}")
+
+    results = {
+        'cg_eigenvalues': cg_eigenvalues[:n_compare],
+        'aa_eigenvalues': aa_eigenvalues[:n_compare],
+        'status': 'basic_comparison_complete',
+        'note': 'Detailed comparison metrics to be implemented during fellowship'
+    }
+
+    return results
 
 def generate_reus_windows(aa_cv, n_windows=20, buffer=0.1, cv_dim=0):
     """

@@ -33,7 +33,9 @@ from .visualize import (
     plot_tica_projection,
     plot_free_energy_landscape,
     plot_cg_aa_overlay,
-    plot_residue_contributions
+    plot_residue_contributions,
+    plot_timescales,
+    plot_cv_comparison
 )
 
 __all__ = [

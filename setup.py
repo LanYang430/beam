@@ -8,7 +8,7 @@ setup(
     description="Boosted Enhanced sampling through Machine-learned collective variables",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    url="https://github.com/YOUR_USERNAME/beam",
+    url="https://github.com/LanYang430/beam.git",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",
