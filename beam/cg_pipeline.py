@@ -35,17 +35,14 @@ def load_and_preprocess_cg(
     dcd_path,
     topology_pdb,
     reference_pdb,
-    align_selection="protein and backbone and resid 68 to 92",
-    feature_selection="name CA or name N or name C"
+    cg_model='upside',
+    align_selection=None,
+    feature_selection=None,
+    feature_type='xyz',
+    feature_kwargs=None
 ):
     """
-    Load and preprocess CG trajectory from DCD file.
-    
-    This function:
-    1. Loads trajectory using topology
-    2. Aligns to reference structure
-    3. Extracts backbone atoms from specified residue range
-    4. Flattens to feature matrix for ML
+    Load and preprocess CG trajectory.
     
     Parameters
     ----------
@@ -55,48 +52,103 @@ def load_and_preprocess_cg(
         PDB file for trajectory topology
     reference_pdb : str
         Reference structure for alignment
-    align_selection : str
-        MDTraj selection string for alignment atoms
-    feature_selection : str
-        MDTraj selection string for feature extraction
+    cg_model : str
+        CG model name ('upside', 'martini', etc.)
+        Determines default atom selections
+    align_selection : str, optional
+        Override default alignment selection
+    feature_selection : str, optional
+        Override default feature selection
+    feature_type : str
+        Feature extraction type: 'xyz', 'distance', or 'custom'
+        Default: 'xyz'
+    feature_kwargs : dict, optional
+        Additional arguments for feature extraction:
+        - For 'distance': {'distance_pairs': [(i,j), ...]}
+        - For 'custom': {'custom_function': callable}
         
     Returns
     -------
     features : np.ndarray
         Feature matrix of shape (n_frames, n_features)
-        where n_features = n_backbone_atoms * 3 (xyz coordinates)
+        
+    Examples
+    --------
+    >>> # Default: xyz coordinates of CA atoms
+    >>> features = load_and_preprocess_cg(
+    ...     'traj.dcd', 'top.pdb', 'ref.pdb',
+    ...     cg_model='upside'
+    ... )
+    
+    >>> # Pairwise distances between CA atoms
+    >>> features = load_and_preprocess_cg(
+    ...     'traj.dcd', 'top.pdb', 'ref.pdb',
+    ...     cg_model='upside',
+    ...     feature_type='distance'
+    ... )
+    
+    >>> # Custom CV function
+    >>> def my_cv(positions):
+    ...     # positions shape: (n_frames, n_atoms, 3)
+    ...     rg = np.sqrt(np.mean(np.sum(positions**2, axis=2), axis=1))
+    ...     return rg.reshape(-1, 1)
+    >>> features = load_and_preprocess_cg(
+    ...     'traj.dcd', 'top.pdb', 'ref.pdb',
+    ...     cg_model='upside',
+    ...     feature_type='custom',
+    ...     feature_kwargs={'custom_function': my_cv}
+    ... )
     """
     if not MDTRAJ_AVAILABLE:
-        raise ImportError("mdtraj is required. Install with: conda install -c conda-forge mdtraj")
+        raise ImportError("mdtraj is required")
     
-    print(f"Loading CG trajectory: {dcd_path}")
+    from .cg_models import get_cg_model_config
+    from .features import FeatureExtractor
+    
+    # Get model config
+    config = get_cg_model_config(cg_model)
+    
+    # Use provided selections or fall back to model defaults
+    align_sel = align_selection or config['align_selection']
+    feature_sel = feature_selection or config['feature_selection']
+    
+    print(f"\nLoading CG trajectory with model: {cg_model}")
+    print(f"  {config.get('description', 'Custom model')}")
+    
+    # Load trajectory
+    print(f"  Loading: {dcd_path}")
     traj = md.load(dcd_path, top=topology_pdb)
     print(f"  Loaded {traj.n_frames} frames, {traj.n_atoms} atoms")
     
-    # Load reference structure
+    # Load reference
     reference = md.load(reference_pdb)
     
-    # Align trajectory
-    print(f"Aligning on: {align_selection}")
-    atom_indices = traj.topology.select(align_selection)
+    # Align
+    print(f"  Aligning on: {align_sel}")
+    atom_indices = traj.topology.select(align_sel)
     traj_aligned = traj.superpose(reference, atom_indices=atom_indices, 
                                   ref_atom_indices=atom_indices)
     
-    # Extract feature atoms
-    print(f"Extracting features: {feature_selection}")
-    feature_atoms = traj_aligned.topology.select(feature_selection)
+    # Extract subset of atoms
+    print(f"  Extracting atoms: {feature_sel}")
+    feature_atoms = traj_aligned.topology.select(feature_sel)
     traj_features = traj_aligned.atom_slice(feature_atoms)
     
-    # Get xyz coordinates and flatten
-    xyz = traj_features.xyz  # shape: (n_frames, n_atoms, 3)
-    n_frames, n_atoms, _ = xyz.shape
-    features = xyz.reshape(n_frames, n_atoms * 3)
+    # Get positions
+    positions = traj_features.xyz  # shape: (n_frames, n_atoms, 3)
     
-    print(f"Feature matrix shape: {features.shape}")
-    print(f"  {n_frames} frames, {n_atoms} atoms, {n_atoms * 3} features")
+    # Extract features
+    print(f"  Extracting features (type: {feature_type})")
+    extractor = FeatureExtractor(
+        feature_type=feature_type,
+        **(feature_kwargs or {})
+    )
+    features = extractor.transform(positions)
+    
+    print(f"  Feature matrix shape: {features.shape}")
+    print(f"    {features.shape[0]} frames, {features.shape[1]} features")
     
     return features
-
 
 def suggest_tica_params(traj_data, method='tica'):
     """
@@ -250,8 +302,8 @@ def prepare_reap_interface(
     # Step 1: Load and preprocess AA trajectory
     print("\n[1/4] Loading AA trajectory...")
     aa_features = load_and_preprocess_cg(  # Same preprocessing as CG
-        aa_dcd_path, topology_pdb, reference_pdb,
-        align_selection, feature_selection
+        aa_dcd_path, topology_pdb, reference_pdb, cg_model='all_atom',
+        align_selection = align_selection, feature_selection = feature_selection
     )
     
     # Step 2: Load CG TICA model
@@ -286,10 +338,13 @@ def run_full_cg_pipeline(
     topology_pdb,
     reference_pdb,
     output_dir=".",
+    cg_model='upside',
     lagtime=None,
     dim=None,
-    align_selection="protein and backbone and resid 68 to 92",
-    feature_selection="name CA or name N or name C"
+    align_selection=None,
+    feature_selection=None,
+    feature_type='xyz',
+    feature_kwargs=None
 ):
     """
     Run complete CG pipeline from trajectory to trained TICA model.
@@ -334,8 +389,14 @@ def run_full_cg_pipeline(
     # Step 1: Load and preprocess
     print("\n[Stage 2.1] Loading and preprocessing CG trajectory...")
     cg_features = load_and_preprocess_cg(
-        cg_dcd_path, topology_pdb, reference_pdb,
-        align_selection, feature_selection
+        cg_dcd_path,
+        topology_pdb,
+        reference_pdb,
+        cg_model=cg_model,
+        align_selection=align_selection,
+        feature_selection=feature_selection, 
+        feature_type=feature_type,
+        feature_kwargs=feature_kwargs
     )
     
     # Step 2: Suggest parameters if not provided

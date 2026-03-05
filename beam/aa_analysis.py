@@ -398,11 +398,14 @@ def run_full_aa_analysis(
     
     # Step 1: Load AA trajectory
     print("\n[Stage 3.1] Loading and preprocessing AA trajectory...")
+
     aa_features = load_and_preprocess_aa(
-        aa_dcd_path, topology_pdb, reference_pdb,
-        align_selection, feature_selection
+        aa_dcd_path,
+        topology_pdb,
+        reference_pdb,
+        align_selection=align_selection,
+        feature_selection=feature_selection
     )
-    
     # Step 2: Transform with CG TICA
     print("\n[Stage 3.2] Transforming AA with CG-learned CVs...")
     aa_in_cg_cv = transform_aa_with_cg_tica(aa_features, cg_tica_pkl_path)

@@ -58,3 +58,63 @@ __all__ = [
     'plot_cg_aa_overlay',
     'plot_residue_contributions',
 ]
+"""
+BEAM: Biomolecular Enhanced sampling Assisted by Machine learning
+
+A toolkit for CG-guided AA enhanced sampling.
+"""
+
+# Core pipeline functions
+from .cg_pipeline import (
+    load_and_preprocess_cg,
+    train_cg_tica,
+    prepare_reap_interface,
+    run_full_cg_pipeline
+)
+
+from .aa_analysis import (
+    load_and_preprocess_aa,
+    transform_aa_with_cg_tica,
+    train_aa_tica,
+    compare_cg_aa_cvs,
+    generate_reus_windows,
+    run_full_aa_analysis
+)
+
+# Feature extraction
+from .features import (
+    FeatureExtractor,
+    extract_features
+)
+
+# CG model registry
+from .cg_models import (
+    get_cg_model_config,
+    register_custom_cg_model,
+    list_available_models
+)
+
+from .cg_evaluation import CGEvaluator
+
+__version__ = '0.1.0'
+
+__all__ = [
+    # Pipeline
+    'load_and_preprocess_cg',
+    'train_cg_tica',
+    'prepare_reap_interface',
+    'run_full_cg_pipeline',
+    'load_and_preprocess_aa',
+    'transform_aa_with_cg_tica',
+    'train_aa_tica',
+    'compare_cg_aa_cvs',
+    'generate_reus_windows',
+    'run_full_aa_analysis',
+    # Features
+    'FeatureExtractor',
+    'extract_features',
+    # CG models
+    'get_cg_model_config',
+    'register_custom_cg_model',
+    'list_available_models',
+]
