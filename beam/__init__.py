@@ -39,6 +39,12 @@ from .visualize import (
 )
 
 __all__ = [
+    # CG Model Evaluation 
+    'CGEvaluator',
+    'get_cg_model_config',
+    'register_custom_cg_model',
+    'list_available_models',
+
     # CG Pipeline
     'load_and_preprocess_cg',
     'train_cg_tica',
@@ -96,7 +102,7 @@ from .cg_models import (
 
 from .cg_evaluation import CGEvaluator
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 __all__ = [
     # Pipeline
