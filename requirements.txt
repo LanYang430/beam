@@ -4,4 +4,3 @@ mdtraj>=1.9.0
 MDAnalysis>=2.0.0
 deeptime>=0.4.0
 jupyter>=1.0.0
-yes

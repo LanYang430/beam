@@ -317,5 +317,5 @@ Special thanks to Robert Bates for software engineering guidance.
 
 For questions or issues, please contact:  
 lyang430@gatech.edu
-yes
+
 **BEAM: Making enhanced sampling accessible through data-driven collective variable discovery**

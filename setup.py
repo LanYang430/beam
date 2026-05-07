@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="beam",
-    version="0.1.0",
+    version="0.2.0",
     author="Lan Yang",
     author_email="lyang430@gatech.edu",
     description="Boosted Enhanced sampling through Machine-learned collective variables",
